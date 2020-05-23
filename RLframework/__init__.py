@@ -1,1 +1,0 @@
-from .adaptmodel import AdaptModel
