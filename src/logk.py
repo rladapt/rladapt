@@ -33,9 +33,8 @@ def degrade_func(head, threshold):
 
     '''
         Start applying degradation to the stream:
-        * apply down_smaple
-        * apply adjust_frame
-        * apply adjust_quality
+        * apply head_filter
+        * apply frequency_filter
     '''
     stream.apply('head_filter', head)
     stream.apply('frequency_filter', threshold)
