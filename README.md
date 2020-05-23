@@ -1,4 +1,5 @@
-# RL-Adapt source code
+# Neural Adaptive IoT Streaming Analytics with RL-Adapt
+
 ## Refinement proceeds ...
 
 
