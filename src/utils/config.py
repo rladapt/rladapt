@@ -27,8 +27,8 @@ pd_config = {
     'rand_vars_3': [0.2],
     'band_norm': 140,
     'cpu_num': 4,
-    'actor_lr': 0.002,
-    'critic_lr': 0.002,
+    'actor_lr': 0.001,
+    'critic_lr': 0.001,
     'batch_size': 64
 }
 

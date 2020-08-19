@@ -25,6 +25,7 @@ class Actor(nn.Module):
         x = F.relu6(self.linear1(s))
         x = F.relu6(self.linear2(x))
         x = torch.tanh(self.linear3(x))
+        # x = self.linear3(x)
 
         return x
 
@@ -100,7 +101,8 @@ class Agent(object):
     def act(self, s0):
         s0 = torch.tensor(s0, dtype=torch.float, device=device).unsqueeze(0)
         a0 = self.actor(s0).squeeze(0).detach().cpu().numpy()
-        return np.clip(a0,-0.5,0.5)
+        print(a0)
+        return a0
 
     def put(self, *transition):
         if len(self.buffer) == self.capacity:
@@ -133,6 +135,8 @@ class Agent(object):
 
         def actor_learn():
             loss = -torch.mean(self.critic(s0, self.actor(s0)))
+            print(loss)
+            # loss = -torch.mean(r1)
             self.actor_optim.zero_grad()
             loss.backward()
             self.actor_optim.step()

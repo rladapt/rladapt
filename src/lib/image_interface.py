@@ -148,7 +148,7 @@ class vision():
                 sumacc.append(1)
             else:
                 sumacc.append(f1score)
-        logger.info('avg acc is {}'.format(sum(sumacc) / len(sumacc)))
+        #logger.info('avg acc is {}'.format(sum(sumacc) / len(sumacc)))
         return sum(sumacc) / len(sumacc)
 
     def _adjust_res(self):
@@ -196,8 +196,9 @@ class vision():
     def bandwidth(self):
         self.bd = get_size(self.video_path) / 1e6 * 8
         if self.bd_baseline:
-            logger.info('bandwidth is {} Mbps, relative: {}'.format(
-                self.bd / len(self.nums) * 30, self.bd / len(self.nums) * 30 / self.bd_baseline))
+            # logger.info('bandwidth is {} Mbps, relative: {}'.format(
+            #    self.bd / len(self.nums) * 30, self.bd / len(self.nums) * 30 / self.bd_baseline))
+            pass
         return self.bd / len(self.nums) * 30
 
     def clean(self):
@@ -224,8 +225,8 @@ BATCH_SIZE = 60
 
 
 def visiontask2(resolution, batch_size, skip, mode, quantizer, debug=False):
-    logger.info("res = {}, batch = {}, skip = {}, quant = {} mode = {}".format(
-        resolution, batch_size, skip, quantizer, mode))
+    # logger.info("res = {}, batch = {}, skip = {}, quant = {} mode = {}".format(
+    #     resolution, batch_size, skip, quantizer, mode))
     if skip == 0:
         skip = 1
     assert(resolution > 0 and resolution <= 1)

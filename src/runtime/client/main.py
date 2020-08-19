@@ -1,9 +1,12 @@
 from requests import get, post
 import time
 import numpy as np
+import sys
+sys.path.append('../../')
 from utils.search import find_le
 import os
 import copy
+from multiprocessing import Pool
 
 
 class runtime():
@@ -12,15 +15,18 @@ class runtime():
         self.low = 0
         self.high = 20
         self.min_size = 0.1
-        self.min_time = 0.1
+        self.min_time = 0.5
         self.eps = 1
         self.times = {}
+        self.debug = False
         self.add_config(config)
-        if hasattr(self, 'log_path'):
-            self.log = open(self.log_path, 'a')
-        else:
-            self.log = open('./log.csv', 'a')
-        self.log.write('time bandwidth accuracy latency\n')
+        # if hasattr(self, 'log_path'):
+        #     self.log = open(self.log_path, 'a')
+        # else:
+        #     self.log = open('./log.csv', 'a')
+        # self.log.write('time bandwidth accuracy latency\n')
+        # self.log.close()
+        self.log_str = ""
 
         # profile csv
         self.model = [[], []]
@@ -45,12 +51,12 @@ class runtime():
 
     def onesec(self, size):
         size = int(size)  # bytes
-        url = 'http://192.168.50.29:8888/{}'.format(size)
+        url = 'http://192.168.51.129:8888/{}'.format(size)
         start = time.time()
         response = get(url)
-        t = time.time() - start
+        t = (time.time() - start) / 2
         print('duration: {}s, speed {}Mbps, internal {} Mbps '.format(
-            t, size/1e6/t, self.cur))
+            t, size / 1e6 / t, self.cur))
         return t  # bytes per second
 
     def predict(self, bandwidth):
@@ -77,32 +83,61 @@ class runtime():
         return min(1, self.min_size * (1 + 5 * abs(latency - self.min_time) / min(latency, self.min_time)))
 
     def run(self, length):
+        p = Pool(100)
         self.times['start'] = time.time()
         self.times['count'] = 0
         while self.scaled_now < length:
             cur, accuracy = self.predict(self.cur)
-            latency = self.onesec(cur * 1e6 * self.min_time)
-            self.times['count'] += 1
-            self.grace_times.append(max(0, latency - self.min_time))
-            if latency - self.min_time < self.eps:
-                print('[UP] latency: {:.5f}'.format(latency - self.min_time))
-                self.cur = np.clip(self.cur + self.scaled_minsize(latency),
-                                   self.low, self.high)
+            if not self.debug:
+                p.apply_async(self._step, (cur, accuracy),
+                              callback=self._step_callback, error_callback=self.error_callback)
             else:
-                print('[DWON] latency: {:.5f}'.format(self.latency))
-                self.cur = np.clip(self.cur - self.scaled_minsize(latency),
-                                   self.low, self.high)
-            self.log.write('{:.5f} {:.5f} {:.5f} {:.5f}\n'.format(
-                self.scaled_now,
-                self.cur * self.min_time / latency,
-                accuracy,
-                max(0, self.latency)
-            ))
-            self.log.flush()
-            time.sleep(max(0, -self.latency))
+                cur, accuracy, latency = self._step(cur, accuracy)
+                self._step_callback([cur, accuracy, latency])
+
+            time.sleep(self.min_time)
+        p.close()
+        p.join()
+
+    def error_callback(self, error):
+        print(error)
+
+    def _step(self, cur, accuracy):
+        latency = self.onesec(cur * 1e6 * self.min_time)
+        return cur, accuracy, latency
+
+    def _step_callback(self, result):
+        cur, accuracy, latency = result
+        self.times['count'] += 1
+        self.grace_times.append(max(0, latency - self.min_time))
+        if latency - self.min_time < self.eps:
+            print('[UP] latency: {:.5f}'.format(latency - self.min_time))
+            self.cur = np.clip(self.cur + self.scaled_minsize(latency),
+                               self.low, self.high)
+        else:
+            print('[DWON] latency: {:.5f}'.format(self.latency))
+            self.cur = np.clip(self.cur - self.scaled_minsize(latency),
+                               self.low, self.high)
+
+        self.log_str += '{:.5f} {:.5f} {:.5f} {:.5f}\n'.format(
+            self.scaled_now,
+            self.cur * self.min_time / latency,
+            accuracy,
+            max(0, self.latency)
+        )
+        # self.log.write('{:.5f} {:.5f} {:.5f} {:.5f}\n'.format(
+        #     self.scaled_now,
+        #     self.cur * self.min_time / latency,
+        #     accuracy,
+        #     max(0, self.latency)
+        # ))
+        # self.log.flush()
+
+        # time.sleep(max(0, -self.latency))
 
     def __del__(self):
-        self.log.close()
+        # self.log.close()
+        pass
 
 
 def splitlog2(path):
@@ -123,7 +158,7 @@ def splitlog2(path):
         for key, val in _tmp.items():
             if len(val) >= 5:
                 val = sorted(val)
-                val = val[int(len(val)*0.025):][:min(-1, -int(len(val)*0.075))]
+                val = val[int(len(val) * 0.025):][:min(-1, -int(len(val) * 0.075))]
             _min, _max, _mid = min(val), max(val), np.median(val)
             if _min == 0:
                 _min = 1e-3
@@ -157,10 +192,10 @@ def splitlog(path='log.csv'):
                     if i == 'bandwidth' and float(y[index]) > 30:
                         to_remove.append(index)
                     if i == 'accuracy' and float(y[index]) == 0:
-                        y[index] = y[index-1]
-                    if i == 'bandwidth' and index < len(x) - 1 and float(y[index+1]) == 0:
-                        y[index+1] = 1
-                    if i == 'bandwidth' and index > 0 and index < len(x) - 1 and float(y[index])/float(y[index-1]) > 2.5 and float(y[index])/float(y[index+1]) > 2.5:
+                        y[index] = y[index - 1]
+                    if i == 'bandwidth' and index < len(x) - 1 and float(y[index + 1]) == 0:
+                        y[index + 1] = 1
+                    if i == 'bandwidth' and index > 0 and index < len(x) - 1 and float(y[index]) / float(y[index - 1]) > 2.5 and float(y[index]) / float(y[index + 1]) > 2.5:
                         to_change.append(index)
                     if index in to_remove:
                         continue

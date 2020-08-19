@@ -5,13 +5,14 @@
 
 ## Requirements
 * Python libraries --> requirements.txt
-* ffmpeg --> Should be installed in /usr/bin/ffmpeg.
+* [ffmpeg](https://ffmpeg.org/) --> Should be installed in /usr/bin/ffmpeg.
 
 ## Important Notes
 * All command should be run in the `src` folder
 
 
 #### Build Pedestrian Detection
+Install [RUST](https://www.rust-lang.org/)
 ```sh
 cd src/extra/video
 sh makepd.sh

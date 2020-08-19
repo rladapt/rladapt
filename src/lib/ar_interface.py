@@ -111,8 +111,8 @@ class net():
     @property
     def net(self):
         if self._net == []:
-            self._net = load_net(b"./extra/yolov3-tiny.cfg",
-                                 b"./extra/yolov3-tiny.weights", 0)
+            self._net = load_net(b"./extra/yolov3-spp.cfg",
+                                 b"./extra/yolov3-spp.weights", 0)
         return self._net
 
 
