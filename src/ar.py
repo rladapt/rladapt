@@ -11,7 +11,7 @@ import random
 
 TRAIN_NUM = 500
 BATCH_SIZE = 30
-TEST_DATA = '../dataset/ar_test'
+TEST_DATA = '../dataset/ar'
 TEST_START = 501
 TEST_NUM = 200  # 550
 
@@ -31,7 +31,7 @@ def degrade_func(resolution, frame_rate, encode_quality):
         * Second, decide the where the `BATCH_SIZE` should start from.
         * Create the stream.
     '''
-    dataset = '../dataset/ar_dev'
+    dataset = '../dataset/ar'
     ground_truth = os.path.join(dataset, 'ground_truth.txt')
     start = random.randint(1, TRAIN_NUM + 1 - BATCH_SIZE)
     stream = ARtask(dataset, np.arange(start, start + BATCH_SIZE),

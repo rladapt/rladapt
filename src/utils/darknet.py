@@ -166,17 +166,6 @@ def detect(net, resized_path, draw_path):
 
 
 if __name__ == "__main__":
-    #net = load_net("cfg/densenet201.cfg", "/home/pjreddie/trained/densenet201.weights", 0)
-    #im = load_image("data/wolf.jpg", 0, 0)
-    #meta = load_meta("cfg/imagenet1k.data")
-    #r = classify(net, meta, im)
-    # print r[:10]
     net = load_net(b"./extra/yolov3-tiny.cfg",
                    b"./extra/yolov3-tiny.weights", 0)
     # meta = load_meta(b"RLframework/coco.data")
-    for i in range(1):
-        t1 = time.time()
-        r = detect(net, '../dataset/ar/',
-                   '/home/shen/Downloads/paper_DEMO/needed2')
-    #    print ("used {} ms".format(time.time() * 1000 - t1 * 1000))
-    # print (r)
